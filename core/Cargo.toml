@@ -37,17 +37,18 @@ base64 = { workspace = true }
 chrono = { workspace = true }
 uuid = { workspace = true }
 rand = { workspace = true }
+subtle = { workspace = true }
 once_cell = { workspace = true }
-dirs = "3.0"
-pbkdf2 = "0.12"
-sha2 = "0.10"
-serde_yaml = "0.9"
-bs58 = "0.5"
+dirs = "*"
+pbkdf2 = "*"
+sha2 = "*"
+serde_yaml = "*"
+bs58 = "*"
 spl-token = { workspace = true }
-spl-token-2022 = { version = "=4.0" }
-spl-token-metadata-interface = { version = "=0.5" }
-spl-associated-token-account = { version = "=4.0" }
-spl-memo = { version = "=4.0" }
+spl-token-2022 = "*"
+spl-token-metadata-interface = "*"
+spl-associated-token-account = "*"
+spl-memo = { version = "*" }
 
 [dev-dependencies]
 solana-program-test = { workspace = true }
