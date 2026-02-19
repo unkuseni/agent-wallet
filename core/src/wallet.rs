@@ -323,7 +323,7 @@ impl Wallet {
         let rpc_client = self.rpc_client.read().await;
         let pubkey = self.public_key();
 
-        let balance_lamports = rpc_client.get_balance(&pubkey).await?;
+        let balance_lamports: u64 = rpc_client.get_balance(&pubkey).await?;
         Ok(balance_lamports as f64 / 1_000_000_000.0) // Convert lamports to SOL
     }
 

@@ -54,17 +54,9 @@ use solana_client::{
     rpc_response::{RpcAccountInfo, RpcKeyedAccount, RpcLogsResponse, RpcVote},
 };
 use solana_sdk::{
-    account::Account,
-    clock::Slot,
-    commitment_config::CommitmentConfig,
-    epoch_info::EpochInfo,
-    hash::Hash,
-    instruction::Instruction,
-    message::Message,
-    pubkey::Pubkey,
-    signature::Signature,
-    signer::Signer,
-    transaction::Transaction,
+    account::Account, clock::Slot, commitment_config::CommitmentConfig, epoch_info::EpochInfo,
+    hash::Hash, instruction::Instruction, message::Message, pubkey::Pubkey, signature::Signature,
+    signer::Signer, transaction::Transaction,
 };
 use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, error, info, instrument, warn};
@@ -228,12 +220,10 @@ impl RpcMetrics {
             &["endpoint", "method", "status"],
         )?;
 
-        let request_duration = Histogram::with_opts(
-            HistogramOpts::new(
-                "agent_wallet_rpc_request_duration_seconds",
-                "RPC request duration in seconds",
-            )
-        )?;
+        let request_duration = Histogram::with_opts(HistogramOpts::new(
+            "agent_wallet_rpc_request_duration_seconds",
+            "RPC request duration in seconds",
+        ))?;
 
         let error_count = IntCounterVec::new(
             IntCounter::opts(
@@ -323,7 +313,10 @@ impl RpcClient {
     /// Create a new RPC client
     #[instrument(skip(config))]
     pub async fn new(config: RpcClientConfig) -> Result<Self> {
-        info!("Creating RPC client with {} endpoints", config.endpoints.len());
+        info!(
+            "Creating RPC client with {} endpoints",
+            config.endpoints.len()
+        );
 
         let mut endpoint_pools = HashMap::new();
         let mut endpoint_health = HashMap::new();
@@ -343,7 +336,9 @@ impl RpcClient {
         }
 
         // Get highest priority endpoint
-        let current_endpoint = config.endpoints.iter()
+        let current_endpoint = config
+            .endpoints
+            .iter()
             .min_by_key(|e| e.priority)
             .cloned()
             .ok_or_else(|| Error::config("No RPC endpoints configured"))?;
@@ -381,7 +376,8 @@ impl RpcClient {
             // Get connection from pool
             let connection = {
                 let mut pools = self.endpoint_pools.write().await;
-                let pool = pools.get_mut(&endpoint_url)
+                let pool = pools
+                    .get_mut(&endpoint_url)
                     .ok_or_else(|| Error::rpc(format!("Endpoint not found: {}", endpoint_url)))?;
 
                 pool.get_connection().await?
@@ -464,7 +460,12 @@ impl RpcClient {
     }
 
     /// Record failed request
-    async fn record_failure(&self, endpoint_url: &str, error: &SolanaClientError, duration: Duration) {
+    async fn record_failure(
+        &self,
+        endpoint_url: &str,
+        error: &SolanaClientError,
+        duration: Duration,
+    ) {
         // Update health
         {
             let mut health_map = self.endpoint_health.write().await;
@@ -489,7 +490,8 @@ impl RpcClient {
                 SolanaClientError::Custom(_) => "custom",
             };
 
-            metrics.error_count
+            metrics
+                .error_count
                 .with_label_values(&[endpoint_url, error_type])
                 .inc();
         }
@@ -521,7 +523,10 @@ impl RpcClient {
         // Get all endpoints sorted by priority
         let mut endpoints: Vec<_> = pools.keys().collect();
         endpoints.sort_by_key(|url| {
-            pools.get(*url).map(|p| p.endpoint.priority).unwrap_or(u32::MAX)
+            pools
+                .get(*url)
+                .map(|p| p.endpoint.priority)
+                .unwrap_or(u32::MAX)
         });
 
         // Find first healthy endpoint
@@ -578,16 +583,21 @@ impl RpcClient {
             Box::pin(client.get_balance_with_commitment(pubkey, self.config.commitment))
         })
         .await
+        .map(|resp| resp.value)
         .map_err(|e| Error::SolanaRpc(e))
     }
 
     /// Get account information
     pub async fn get_account(&self, pubkey: &Pubkey) -> Result<Account> {
-        self.execute_with_failover(|client| {
-            Box::pin(client.get_account_with_commitment(pubkey, self.config.commitment))
-        })
-        .await
-        .map_err(|e| Error::SolanaRpc(e))
+        let resp = self
+            .execute_with_failover(|client| {
+                Box::pin(client.get_account_with_commitment(pubkey, self.config.commitment))
+            })
+            .await
+            .map_err(|e| Error::SolanaRpc(e))?;
+
+        resp.value
+            .ok_or_else(|| Error::AccountNotFound(format!("Account not found: {}", pubkey)))
     }
 
     /// Get multiple accounts
@@ -596,6 +606,7 @@ impl RpcClient {
             Box::pin(client.get_multiple_accounts_with_commitment(pubkeys, self.config.commitment))
         })
         .await
+        .map(|resp| resp.value)
         .map_err(|e| Error::SolanaRpc(e))
     }
 
@@ -605,6 +616,7 @@ impl RpcClient {
             Box::pin(client.get_latest_blockhash_with_commitment(self.config.commitment))
         })
         .await
+        .map(|resp| resp.value)
         .map_err(|e| Error::SolanaRpc(e))
     }
 
@@ -626,18 +638,25 @@ impl RpcClient {
     }
 
     /// Simulate transaction
-    pub async fn simulate_transaction(&self, transaction: &Transaction) -> Result<solana_client::rpc_response::RpcSimulateTransactionResult> {
-        self.execute_with_failover(|client| {
-            Box::pin(client.simulate_transaction(transaction))
-        })
-        .await
-        .map_err(|e| Error::SolanaRpc(e))
+    pub async fn simulate_transaction(
+        &self,
+        transaction: &Transaction,
+    ) -> Result<solana_client::rpc_response::RpcSimulateTransactionResult> {
+        self.execute_with_failover(|client| Box::pin(client.simulate_transaction(transaction)))
+            .await
+            .map_err(|e| Error::SolanaRpc(e))
     }
 
     /// Get transaction
-    pub async fn get_transaction(&self, signature: &Signature) -> Result<solana_client::rpc_response::RpcTransactionInfo> {
+    pub async fn get_transaction(
+        &self,
+        signature: &Signature,
+    ) -> Result<solana_client::rpc_response::RpcTransactionInfo> {
         self.execute_with_failover(|client| {
-            Box::pin(client.get_transaction(signature, solana_transaction_status::UiTransactionEncoding::Json))
+            Box::pin(client.get_transaction(
+                signature,
+                solana_transaction_status::UiTransactionEncoding::Json,
+            ))
         })
         .await
         .map_err(|e| Error::SolanaRpc(e))
@@ -649,6 +668,7 @@ impl RpcClient {
             Box::pin(client.get_slot_with_commitment(self.config.commitment))
         })
         .await
+        .map(|resp| resp.value)
         .map_err(|e| Error::SolanaRpc(e))
     }
 
@@ -658,6 +678,7 @@ impl RpcClient {
             Box::pin(client.get_epoch_info_with_commitment(self.config.commitment))
         })
         .await
+        .map(|resp| resp.value)
         .map_err(|e| Error::SolanaRpc(e))
     }
 
@@ -671,18 +692,33 @@ impl RpcClient {
     }
 
     /// Get token account balance
-    pub async fn get_token_account_balance(&self, token_account: &Pubkey) -> Result<solana_account_decoder::UiTokenAmount> {
+    pub async fn get_token_account_balance(
+        &self,
+        token_account: &Pubkey,
+    ) -> Result<solana_account_decoder::UiTokenAmount> {
         self.execute_with_failover(|client| {
-            Box::pin(client.get_token_account_balance_with_commitment(token_account, self.config.commitment))
+            Box::pin(
+                client.get_token_account_balance_with_commitment(
+                    token_account,
+                    self.config.commitment,
+                ),
+            )
         })
         .await
+        .map(|resp| resp.value)
         .map_err(|e| Error::SolanaRpc(e))
     }
 
     /// Get program accounts
-    pub async fn get_program_accounts(&self, program_id: &Pubkey, config: Option<RpcProgramAccountsConfig>) -> Result<Vec<RpcKeyedAccount>> {
+    pub async fn get_program_accounts(
+        &self,
+        program_id: &Pubkey,
+        config: Option<RpcProgramAccountsConfig>,
+    ) -> Result<Vec<RpcKeyedAccount>> {
         self.execute_with_failover(|client| {
-            Box::pin(client.get_program_accounts_with_config(program_id, config.unwrap_or_default()))
+            Box::pin(
+                client.get_program_accounts_with_config(program_id, config.unwrap_or_default()),
+            )
         })
         .await
         .map_err(|e| Error::SolanaRpc(e))
@@ -708,7 +744,8 @@ impl RpcClientExt for RpcClient {
         let endpoint_url = self.current_endpoint_url().await;
         let mut pools = self.endpoint_pools.write().await;
 
-        let pool = pools.get_mut(&endpoint_url)
+        let pool = pools
+            .get_mut(&endpoint_url)
             .ok_or_else(|| Error::rpc(format!("Endpoint not found: {}", endpoint_url)))?;
 
         let connection = pool.get_connection().await?;
@@ -800,7 +837,10 @@ mod tests {
 
         assert_eq!(config.endpoints.len(), 1);
         assert_eq!(config.timeout, Duration::from_secs(60));
-        assert_eq!(config.commitment.commitment, solana_sdk::commitment_config::CommitmentLevel::Finalized);
+        assert_eq!(
+            config.commitment.commitment,
+            solana_sdk::commitment_config::CommitmentLevel::Finalized
+        );
         assert!(!config.use_websocket);
     }
 }

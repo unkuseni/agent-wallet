@@ -59,6 +59,9 @@ pub enum Error {
     /// Wallet not found
     #[error("Wallet not found: {0}")]
     WalletNotFound(String),
+    /// Account not found
+    #[error("Account not found: {0}")]
+    AccountNotFound(String),
 
     /// Keypair operation failed
     #[error("Keypair error: {0}")]
