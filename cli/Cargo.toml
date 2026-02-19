@@ -1,0 +1,53 @@
+[package]
+name = "agent-wallet-cli"
+version = "0.1.0"
+edition = "2021"
+description = "Command-line interface for AI agent wallets on Solana"
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/yourusername/agent-wallet"
+keywords = ["solana", "wallet", "agent", "cli", "blockchain"]
+categories = ["cryptography", "web3", "blockchain", "command-line-utilities"]
+authors = ["AI Agent Wallet Contributors"]
+
+[[bin]]
+name = "agent-wallet-cli"
+path = "src/main.rs"
+
+[dependencies]
+agent-wallet-core = { path = "../core", version = "0.1.0" }
+agent-wallet-agent = { path = "../agent", version = "0.1.0" }
+agent-wallet-dapp = { path = "../dapp", version = "0.1.0" }
+
+solana-sdk = { workspace = true }
+solana-client = { workspace = true }
+solana-program = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+hex = { workspace = true }
+base64 = { workspace = true }
+once_cell = { workspace = true }
+futures = { workspace = true }
+indicatif = "0.17"
+dialoguer = "0.11"
+shellexpand = "3.1"
+directories = "5.0"
+dirs = "5.0"
+
+[dev-dependencies]
+tempfile = "3.10"
+assert_cmd = "2.0"
+predicates = "3.0"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,0 +1,45 @@
+[package]
+name = "agent-wallet-agent"
+version = "0.1.0"
+edition = "2021"
+description = "Agent framework for AI agent wallets on Solana"
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/yourusername/agent-wallet"
+keywords = ["solana", "agent", "ai", "wallet", "blockchain"]
+categories = ["cryptography", "web3", "blockchain", "artificial-intelligence"]
+authors = ["AI Agent Wallet Contributors"]
+
+[features]
+default = ["deterministic"]
+deterministic = []
+llm = ["dep:reqwest", "dep:serde_json", "dep:tokio-stream"]  # async-openai temporarily disabled
+full = ["deterministic", "llm", "agent-wallet-core/full"]
+
+[dependencies]
+agent-wallet-core = { path = "../core", version = "0.1.0" }
+solana-sdk = { workspace = true }
+solana-client = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros", "time", "sync"] }
+serde = { workspace = true }
+serde_json = { workspace = true, optional = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+futures = { workspace = true }
+chrono = { workspace = true }
+rand = { workspace = true }
+
+# Optional LLM dependencies (placeholder - requires compatible versions)
+reqwest = { workspace = true, optional = true }
+# async-openai = { version = "0.21", optional = true, features = ["default"] }  # Temporarily disabled due to dependency conflicts
+tokio-stream = { version = "0.1", optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }
+tempfile = "3.10"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

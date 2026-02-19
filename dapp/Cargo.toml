@@ -1,0 +1,45 @@
+[package]
+name = "agent-wallet-dapp"
+version = "0.1.0"
+edition = "2021"
+description = "dApp and DeFi protocol clients for AI agent wallets on Solana"
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/yourusername/agent-wallet"
+keywords = ["solana", "dapp", "defi", "wallet", "agent", "blockchain"]
+categories = ["cryptography", "web3", "blockchain"]
+authors = ["AI Agent Wallet Contributors"]
+
+[features]
+default = ["test-program"]
+test-program = []
+raydium = ["dep:spl-token"]  # Placeholder: requires raydium-client
+orca = ["dep:spl-token"]     # Placeholder: requires orca-sdk
+full = ["test-program", "agent-wallet-core/full"]
+
+[dependencies]
+agent-wallet-core = { path = "../core", version = "0.1.0" }
+solana-sdk = { workspace = true }
+solana-client = { workspace = true }
+solana-program = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros", "sync"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+async-trait = { workspace = true }
+
+# Optional protocol clients (placeholder for prototype)
+# raydium-client = { version = "0.1", optional = true, git = "https://github.com/raydium-io/raydium-client-rs" }
+# orca-sdk = { version = "0.1", optional = true, git = "https://github.com/orca-so/orca-sdk-rs" }
+spl-token = { workspace = true, optional = true }
+
+[dev-dependencies]
+solana-program-test = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tempfile = "3.10"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
