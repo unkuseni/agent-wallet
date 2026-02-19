@@ -17,14 +17,14 @@
 //!
 //! ```no_run
 //! use agent_wallet_core::{Wallet, WalletConfig};
+//! use zeroize::Zeroizing;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     // Create a new wallet
-//!     let config = WalletConfig::new()
-//!         .with_rpc_url("https://api.devnet.solana.com");
-//!
-//!     let mut wallet = Wallet::create("my-agent", "secure-passphrase", config)?;
+//!     let config = WalletConfig::new();
+//!     let passphrase = Zeroizing::new("secure-passphrase".to_string());
+//!     let mut wallet = Wallet::create("my-agent", &passphrase, config).await?;
 //!
 //!     // Get balance
 //!     let balance = wallet.get_balance().await?;
@@ -32,9 +32,9 @@
 //!
 //!     // Transfer SOL
 //!     let signature = wallet.transfer_sol(
-//!         "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+//!         &Pubkey::new_unique(),
 //!         0.1,
-//!         Some("Test transfer"),
+//!         Some("Test transfer".to_string()),
 //!     ).await?;
 //!
 //!     println!("Transaction sent: {}", signature);
@@ -64,26 +64,49 @@ pub mod wallet;
 
 // Re-exports for convenience
 pub use config::WalletConfig;
+pub use encryption::{EncryptedData, EncryptionService};
 pub use error::{Error, Result};
-pub use keypair::{Keypair, PublicKey};
-pub use token::{Token, TokenAccount, TokenMint};
-pub use transaction::{TransactionBuilder, TransactionOptions};
-pub use types::{AgentAction, AgentContext, WalletInfo};
-pub use wallet::Wallet;
+pub use keypair::{EncryptedKeypair, KeypairManager, SecureKeypair};
+pub use rpc::{RpcClient, RpcClientConfig};
+pub use storage::{StorageService, WalletStorage};
+pub use token::{TokenAccountInfo, TokenInfo, TokenManager, TokenMetadataInfo};
+pub use transaction::{SimulationResult, TransactionBuilder, TransactionOptions, ValidationResult};
+pub use types::{AgentAction, AgentContext, PermissionLevel, WalletInfo};
+pub use wallet::{Wallet, WalletBuilder};
+
+// Type aliases for compatibility with architecture documentation
+/// Secure keypair type
+pub type Keypair = SecureKeypair;
+/// Public key type
+pub type PublicKey = solana_sdk::pubkey::Pubkey;
+/// Token information type
+pub type Token = TokenInfo;
+/// Token account information type
+pub type TokenAccount = TokenAccountInfo;
+/// Token mint address type
+pub type TokenMint = Pubkey;
 
 /// Prelude module for easy importing of common types
 pub mod prelude {
     pub use super::{
-        AgentAction, AgentContext, Error, Keypair, PublicKey, Result, Token, TokenAccount,
-        TokenMint, TransactionBuilder, Wallet, WalletConfig, WalletInfo,
+        AgentAction, AgentContext, EncryptedData, EncryptedKeypair, EncryptionService, Error,
+        Keypair, KeypairManager, PermissionLevel, PublicKey, Result, RpcClient, RpcClientConfig,
+        SecureKeypair, SimulationResult, StorageService, Token, TokenAccount, TokenAccountInfo,
+        TokenInfo, TokenManager, TokenMetadataInfo, TokenMint, TransactionBuilder,
+        TransactionOptions, ValidationResult, Wallet, WalletBuilder, WalletConfig, WalletInfo,
+        WalletStorage,
     };
 
     // Re-export commonly used Solana types
     pub use solana_sdk::{
         commitment_config::CommitmentConfig,
+        pubkey::Pubkey,
         signature::{Signature, Signer},
         transaction::Transaction,
     };
+
+    // Re-export zeroize for secure memory handling
+    pub use zeroize::Zeroizing;
 }
 
 /// Library version information
